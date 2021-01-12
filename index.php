@@ -21,14 +21,10 @@
   </head>
   <body>
     <div id=userinput>
-      <form>
-        <input type="text" name="first" placeholder="First Name">
+      <form action="index.php" method="POST">
+        <input type="text" name="prename" placeholder="First Name">
         <br>
-        <input type="text" name="last" placeholder="Last Name">
-        <br>
-        <input type="text" name="longtitude" placeholder="Longtitude">
-        <br>
-        <input type="text" name="latitude" placeholder="Latitude">
+        <input type="text" name="lastname" placeholder="Last Name">
         <br>
         <button type="submit" name="submit">Abgeben</button>
       </form>
@@ -67,7 +63,52 @@
           zoom: 10
         })
       });
+var marker = new ol.Feature(new ol.geom.Point(ol.proj.fromLonLat([106.8478695, -6.1568562])));
+markers.getSource().addFeature(marker);
+
     </script>
+    <?php
+      $servername = "localhost";
+      $user = "root";
+      $password = "";
+      $db = "happyplace";
+
+      $connection = new mysqli($servername, $user, $password, $db);
+
+
+      if ($connection->connect_error) {
+        die("Connection failed: " . $connection->connect_error);
+    }
+
+    if (isset($_POST['submit-search'])) {
+        $searchedperson = $_POST['personsearch'];
+        $searchedperson_last = $_POST['personsearch-last'];
+        $sql_full = "SELECT * FROM apprentices WHERE prename='" . $searchedperson . "' AND lastname='$searchedperson_last';";
+        $result_full = $connection->query($sql_full);
+        $sql_appr = "SELECT prename, lastname FROM apprentices WHERE prename='" . $searchedperson . "' AND lastname='$searchedperson_last';";
+        $result_appr = $connection->query($sql_appr);
+        if ($result_full->num_rows > 0) {
+            $row_full = $result_full->fetch_array(MYSQLI_BOTH);
+            $row_appr = $result_appr->fetch_array(MYSQLI_BOTH);
+            $place_id = $row_full[3];
+            $marker_id = $row_full[4];
+            $sql_place = "SELECT latitude, longitude FROM Ort WHERE id=" . $OrtId . ";";
+            $sql_marker = "SELECT color FROM Marker WHERE id=" . $MarkerId . ";";
+            $result_places = $connection->query($sql_place);
+            $result_marker = $connection->query($sql_marker);
+            $row_places = $result_places->fetch_array(MYSQLI_BOTH);
+            $row_marker = $result_marker->fetch_array(MYSQLI_BOTH);
+            echo "
+            <script type='text/javascript'>
+                add_map_point(" . $row_places[1] . ", " . $row_places[0] . ");
+            </script>";;
+        } else {
+            echo "<p id='result-id' class='result'>0 results</p>";
+        }
+
+    }
+    $connection->close();
+    ?>
   </body>
 </html>
 
